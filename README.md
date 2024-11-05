@@ -20,6 +20,15 @@ JAVABUCKS 프로젝트는 카페 운영의 모든 과정을 통합 관리할 수
 
 
 
+## Roles
+- 매장 주문관리
+- 매장 재고관리
+- 관리자 발주관리
+- 사용자 회원가입/로그인
+- 사용자 주문내역
+
+
+
 ## Development Environment
 - Spring STS4 (Spring Boot 3.3.2)
 - Java 21
