@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+
+<mapper namespace="mybatis.mapper.orderMapper">
+	<select id="orderInfo" parameterType="java.util.Map" resultType="OrderDTO">
+		select * from javabucks_order
+		where bucksId = #{bucksId}
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{searchOpt_orderDate}
+			and (orderType = 'order' OR orderType = 'togo')
+		order by orderDate desc		
+	</select>
+	
+	<select id="searchOrderInfo" parameterType="java.util.Map" resultType="OrderDTO">
+		select * from javabucks_order
+		where bucksId = #{bucksId}
+		<if test="searchOpt_orderDate != '' and searchOpt_orderCode != ''">
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{searchOpt_orderDate}
+			and orderCode like concat('%', #{searchOpt_orderCode})
+		</if>
+		<if test="searchOpt_orderDate != '' and searchOpt_orderCode == ''">
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{searchOpt_orderDate}
+		</if>
+		<if test="searchOpt_orderDate == '' and searchOpt_orderCode != ''">
+			and orderCode like concat('%', #{searchOpt_orderCode})
+		</if>
+			and orderType = 'order'
+		order by orderDate desc	
+	</select>
+	
+	<select id="deliversOrderInfo" parameterType="java.util.Map" resultType="OrderDTO">
+		select * from javabucks_order
+		where bucksId = #{bucksId}
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{searchOpt_orderDate}
+			and orderType = 'delivers'
+		order by orderDate desc		
+	</select>
+	
+	<select id="searchDeliversOrderInfo" parameterType="java.util.Map" resultType="OrderDTO">
+		select * from javabucks_order
+		where bucksId = #{bucksId}
+			<if test="searchOpt_orderDate != '' and searchOpt_orderCode != ''">
+				and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{searchOpt_orderDate}
+				and orderCode like concat('%', #{searchOpt_orderCode})
+			</if>
+			<if test="searchOpt_orderDate != '' and searchOpt_orderCode == ''">
+				and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{searchOpt_orderDate}
+			</if>
+			<if test="searchOpt_orderDate == '' and searchOpt_orderCode != ''">
+				and orderCode like concat('%', #{searchOpt_orderCode})
+			</if>
+				and orderType = 'delivers'
+		order by orderDate desc	
+	</select>
+	
+	<select id="getMenuName" parameterType="String" resultType="String">
+		select menuName from javabucks_menu
+		where menuCode = #{menuCode}
+	</select>
+	
+	<select id="getMenuOpt" parameterType="String" resultType="OrderOptDTO">
+		select * from javabucks_order_opt
+		where optId = #{optId}
+	</select>
+	
+	<select id="getCupType" parameterType="int" resultType="String">
+		select cupType from javabucks_menuopt_cup
+		where cupNum = #{cupNum}
+	</select>
+	
+	<select id="getCupPrice" parameterType="int" resultType="Integer">
+		select cupPrice from javabucks_menuopt_cup
+		where cupNum = #{cupNum}
+	</select>
+	
+	<select id="getShotType" parameterType="int" resultType="String">
+		select shotType from javabucks_menuopt_shot
+		where shotNum = #{shotNum}
+	</select>
+	
+	<select id="getShotPrice" parameterType="int" resultType="Integer">
+		select shotPrice from javabucks_menuopt_shot
+		where shotNum = #{shotNum}
+	</select>
+	
+	<select id="getSyrupType" parameterType="int" resultType="String">
+		select syrupType from javabucks_menuopt_syrup
+		where syrupNum = #{syrupNum}
+	</select>
+	
+	<select id="getSyrupPrice" parameterType="int" resultType="Integer">
+		select syrupPrice from javabucks_menuopt_syrup
+		where syrupNum = #{syrupNum}
+	</select>
+	
+	<select id="getMilkType" parameterType="int" resultType="String">
+		select milkType from javabucks_menuopt_milk
+		where milkNum = #{milkNum}
+	</select>
+	
+	<select id="getMilkPrice" parameterType="int" resultType="Integer">
+		select milkPrice from javabucks_menuopt_milk
+		where milkNum = #{milkNum}
+	</select>
+	
+	<select id="getIceType" parameterType="int" resultType="String">
+		select iceType from javabucks_menuopt_ice
+		where iceNum = #{iceNum}
+	</select>
+	
+	<select id="getIcePrice" parameterType="int" resultType="Integer">
+		select icePrice from javabucks_menuopt_ice
+		where iceNum = #{iceNum}
+	</select>
+	
+	<select id="getWhipType" parameterType="int" resultType="String">
+		select whipType from javabucks_menuopt_whip
+		where whipNum = #{whipNum}
+	</select>
+	
+	<select id="getWhipPrice" parameterType="int" resultType="Integer">
+		select whipPrice from javabucks_menuopt_whip
+		where whipNum = #{whipNum}
+	</select>
+	
+	<select id="getNewOrderListCount" parameterType="String" resultType="int">
+		select count(*) from javabucks_order
+		where bucksId = #{bucksId}
+			and orderStatus = '주문완료'
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{today}
+	</select>
+	
+	<select id="getStoreOrderListCount" parameterType="String" resultType="int">
+		select count(*) from javabucks_order
+		where bucksId = #{bucksId}
+			and orderStatus = '주문완료'
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{today}
+			and (orderType = 'order' OR orderType = 'togo')
+	</select>
+	
+	<select id="getStoreOrderList" parameterType="java.util.Map" resultType="OrderDTO">
+		select * 
+		from ( select rownum rn, A.*
+				from ( select * from javabucks_order
+					   where bucksId = #{bucksId}
+							and orderStatus = '주문완료'
+							and (orderType = 'order' OR orderType = 'togo')
+							and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{today}
+					   order by orderDate asc) A)
+		where rn between #{startRow} and #{endRow}	
+	</select>
+	
+	<select id="getDeliverOrderListCount" parameterType="String" resultType="int">
+		select count(*) from javabucks_order
+		where bucksId = #{bucksId}
+			and orderStatus = '주문완료'
+			and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{today}
+			and orderType = 'delivers'
+	</select>
+		
+	<select id="getDeliverOrderList" parameterType="java.util.Map" resultType="OrderDTO">
+		select * 
+		from ( select rownum rn, A.*
+				from ( select * from javabucks_order
+					   where bucksId = #{bucksId}
+							and orderStatus = '주문완료'
+							and orderType = 'delivers'
+							and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{today}
+					   order by orderDate asc) A)
+		where rn between #{startRow} and #{endRow}	
+	</select>
+	
+	<select id="getAllOrderList" parameterType="java.util.Map" resultType="orderDTO">
+		select * from javabucks_order
+		where bucksId = #{bucksId}
+			and orderCode = #{orderCode}
+	</select>
+	
+	<select id="getUseList" parameterType="String" resultType="stockUseDTO">
+		select * from javabucks_stockUse
+		where stockUseCode = #{menuOptCode}
+		
+	</select>
+	
+	<update id="updateCountMinus" parameterType="java.util.Map">
+		update javabucks_storeStocks 
+		set stocksCount = stocksCount - #{value}
+		where bucksId = #{bucksId}
+			and stockListCode = #{stockListCode}
+	</update>
+	
+	<select id="getStoreStocksCount" parameterType="java.util.Map" resultType="int">
+		select stocksCount from javabucks_storeStocks
+		where bucksId = #{bucksId}
+			and stockListCode = #{stockListCode}
+	</select>
+	
+	<select id="getSyrupCode" parameterType="String" resultType="String">
+		select stockListCode from javabucks_stocklist
+		where stockListName = #{syrupType}
+	</select>
+	
+	<select id="getMilkCode" parameterType="String" resultType="String">
+		select stockListCode from javabucks_stocklist
+		where stockListName like concat(#{milkType}, '%')
+	</select>
+	
+	<select id="getStockListCode" parameterType="String" resultType="String">
+		select stockListCode from javabucks_stocklist
+		where stockListName  = #{menuNmae}
+	</select>
+	
+	<update id="updateOrderStatus" parameterType="String">
+		update javabucks_order
+		set orderStatus = '제조중'
+		where orderCode = #{orderCode}
+	</update>
+	
+	<select id="getUserId" parameterType="java.util.Map" resultType="String">
+		select userId from javabucks_order
+		where bucksId = #{bucksId}
+		and orderCode = #{orderCode}
+	</select>
+	
+	<insert id="insertDeliversFinishAlarm" parameterType="java.util.Map">
+		insert into javabucks_alarm (alarmNum, userId, alarmCate, alarmCont) 
+		values (seq_alarmnum.nextval, #{userId}, 'order', #{alarmCont})
+	</insert>
+	
+	<insert id="insertOrderAlarm" parameterType="java.util.Map">
+		insert into javabucks_alarm (alarmNum, userId, alarmCate, alarmCont) 
+		values (seq_alarmnum.nextval, #{userId}, 'order', #{alarmCont})
+	</insert>
+	
+	<select id="getMakingListCount" parameterType="String" resultType="int">
+		select count(*) from javabucks_order
+		where bucksId = #{bucksId}
+			and orderStatus = '제조중'
+	</select>
+	
+	<select id="getMakingList" parameterType="java.util.Map" resultType="OrderDTO">
+		select * 
+		from ( select rownum rn, A.*
+				from ( select * from javabucks_order
+					   where bucksId = #{bucksId}
+							and orderStatus = '제조중'
+							and TO_CHAR(orderDate, 'YYYY-MM-DD') = #{today}
+					   order by orderDate asc) A)
+		where rn between #{startRow} and #{endRow}	
+	</select>
+	
+	<update id="orderStatusUpdateCancel" parameterType="java.util.Map">
+		update javabucks_order
+		set orderStatus = '주문취소'
+		where orderCode = #{orderCode}	
+			and bucksId = #{bucksId}
+	</update>
+	
+	<update id="orderStatusUpdateFinish" parameterType="java.util.Map">
+		update javabucks_order
+		set orderStatus = '제조완료'
+		where orderCode = #{orderCode}
+			and bucksId = #{bucksId}
+	</update>
+	
+	<update id="deliverStatusUpdateFinish" parameterType="java.util.Map">
+		update javabucks_order
+		set orderStatus = '배달준비'
+		where orderCode = #{orderCode}
+			and bucksId = #{bucksId}	
+	</update>
+	
+	<update id="deliverStatusUpdateDeliversFinish">
+		update javabucks_order
+		set orderStatus = '배달완료'
+		where orderStatus = '배달준비'
+	</update>
+	
+	<update id="storemenuStatusStop" parameterType="String">
+		update javabucks_bucks
+		set orderEnable = 'N'
+		where bucksId = #{bucksId}
+	</update>
+
+	
+	<update id="storemenuStatusRestart" parameterType="String">
+		update javabucks_bucks
+		set orderEnable = 'Y'
+		where bucksId = #{bucksId}
+	</update>
+	
+	<select id="getStoreOrderStatus" parameterType="String" resultType="String">
+		select orderEnable from javabucks_bucks
+		where bucksId = #{bucksId}
+	</select>
+	
+	<select id="getDeliversReady" resultType="OrderDTO">
+		select userId, orderCode from javabucks_order
+		where orderStatus = '배달준비'
+	</select>
+	
+	<select id="getStocksName" parameterType="String" resultType="String">
+		select stockListName from javabucks_stockList
+		where stockListCode = #{stockListCode}
+	</select>
+	
+	
+</mapper>

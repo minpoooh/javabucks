@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="mybatis.mapper.coupon-mapper">
+  	<!-- 쿠폰등록 -->
+  	<insert id="insertCoupon" parameterType="CouponDTO">
+	    insert into javabucks_coupon (cpnCode, cpnName, cpnPrice, cpnDesc) values (#{cpnCode}, #{cpnName}, #{cpnPrice}, #{cpnDesc})
+	</insert>
+	
+  	<!-- 등록된 쿠폰리스트 조회 -->
+	<select id="listCoupon" resultType="CouponDTO">
+  		select * from javabucks_coupon
+  	</select>
+  	
+  	<!-- 쿠폰리스트 - 쿠폰명, 쿠폰코드 중복체크 -->
+  	<select id="cpnCheck" parameterType="CouponDTO" resultType="CouponDTO">
+  		select * from javabucks_coupon where cpnName = #{cpnName} or cpnCode = #{cpnCode}
+  	</select>
+  	
+  	<!-- 삭제 전 유저에게 발급된 쿠폰이 있는지 확인 -->
+  	<select id="userCpnCheck" parameterType="String" resultType="CouponListDTO">
+  		select * from javabucks_couponList where cpnCode = #{cpnCode}
+  	</select>
+  		
+  	<!-- 쿠폰 삭제 -->
+  	<delete id="deleteCoupon" parameterType="String">
+  		delete from javabucks_coupon where cpnCode =#{cpnCode}
+  	</delete>
+  	
+  	<!-- 유저 정보 조회 -->
+  	<select id="getUserInfo" resultType="userDTO">
+  		select * from javabucks_user
+  	</select>
+  	
+  	<!-- 등록된 쿠폰리스트 조회 -->
+  	<select id="getUserCpnList" resultType="CouponListDTO">
+  		select cl.*, c.cpnName from javabucks_couponList cl inner join javabucks_coupon c on cl.cpnCode = c.cpnCode order by cpnListStartDate desc
+  	</select>
+  	
+  	<!-- 유저에게 쿠폰 등록 -->
+  	<insert id="toUserCoupon" parameterType="CouponListDTO">
+  		insert into javabucks_couponList (cpnListNum, cpnCode, userId, cpnListStatus, cpnListStartDate, cpnListEndDate, cpnListUseDate) values (seq_cpnListNum.nextval, #{cpnCode}, #{userId}, default, sysdate, to_char(add_months(sysdate,+12),'yyyy-mm-dd'), '')
+  	</insert>
+  	
+  	<!-- 유저에게 하나의 쿠폰이 같은 날 중복발급 안되게 체크 -->
+  	<select id="todayCpnCheck" parameterType="java.util.Map" resultType="CouponListDTO">
+  		select * from javabucks_couponList cl 
+  		inner join javabucks_coupon c on cl.cpnCode = c.cpnCode 
+  		where userId = #{userId} and cl.cpnCode = #{cpnCode} and TRUNC(cl.cpnListStartDate) = trunc(sysdate)
+  	</select>
+  	
+  	<!-- 특정 유저에게 쿠폰 전송 -->
+  	<insert id="sendUserCoupon" parameterType="CouponListDTO">
+  		insert into javabucks_couponList (cpnListNum, cpnCode, userId, cpnListStatus, cpnListStartDate, cpnListEndDate, cpnListUseDate) values (seq_cpnListNum.nextval, #{cpnCode}, #{userId}, default, sysdate, to_char(add_months(sysdate,+12),'yyyy-mm-dd'), '')
+  	</insert>
+  	
+  	<!-- 유저에게 등록된 쿠폰 알림 전송 -->
+  	<insert id="toUserAlarm" parameterType="AlarmDTO">
+  		insert into javabucks_alarm (alarmNum, userId, alarmIsRead, alarmCate, alarmCont, alarmRegDate) values (seq_alarmnum.nextval, #{userId}, default, #{alarmCate}, #{alarmCont}, default)
+  	</insert>
+  	
+  	<!-- 등록된 쿠폰코드, 코드명 조회 -->
+  	<select id="cpnInfoList" resultType="CouponDTO">
+  		select distinct cpnCode, cpnName from  javabucks_coupon
+  	</select>
+  	
+  	<!-- 쿠폰리스트 조회 -->
+  	<select id="searchCpnList" parameterType="java.util.Map" resultType="CouponListDTO">
+	  	select * from (
+	  		select row_number() over (order by cl.cpnListStartDate desc) as rn, cl.*, c.*
+	  		from javabucks_couponList cl 
+	  		join javabucks_coupon c on cl.cpnCode = c.cpnCode
+	  	) coupons
+	  	where rn between #{startRow} and #{endRow}
+  	</select>
+  		
+  	<!-- 검색 조건에 맞게 필터링된 쿠폰리스트 -->
+  	<select id="searchFilterCpn" parameterType="java.util.Map" resultType="CouponListDTO">
+	    select cl.*, c.cpnCode, c.cpnName
+	    from javabucks_couponList cl
+	    inner join javabucks_coupon c on cl.cpnCode = c.cpnCode 
+	    where
+	        (
+	            (#{searchDate} = 'cpnListStartDate' and cl.cpnListStartDate between TO_DATE(#{searchStartDate}, 'YYYY-MM-DD') and TO_DATE(#{searchEndDate}, 'YYYY-MM-DD') + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+	            or
+	            (#{searchDate} = 'cpnListEndDate' and cl.cpnListEndDate between TO_DATE(#{searchStartDate}, 'YYYY-MM-DD') and TO_DATE(#{searchEndDate}, 'YYYY-MM-DD') + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+	            or
+	            (#{searchDate} = 'cpnListUseDate' and cl.cpnListUseDate between TO_DATE(#{searchStartDate}, 'YYYY-MM-DD') and TO_DATE(#{searchEndDate}, 'YYYY-MM-DD') + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+	            or 
+	            (#{searchStartDate} is null and #{searchEndDate} is null)
+	        )
+	        and (#{cpnListStatus} is null or cl.cpnListStatus = #{cpnListStatus})
+	        and (#{userId} is null or cl.userId like '%' || #{userId} || '%')
+	        and (#{cpnName} is null or c.cpnName = #{cpnName})
+	    order by cl.cpnListStartDate desc
+	    offset #{offset} rows fetch next #{limit} rows only
+	</select>
+
+  	<!-- 검색 조건에 맞게 필터링된 쿠폰리스트 갯수 -->
+  	<select id="searchFilterCpnCount" parameterType="java.util.Map" resultType="Integer">
+	    select count(*) 
+	    from javabucks_couponList cl 
+	    inner join javabucks_coupon c on cl.cpnCode = c.cpnCode 
+	    where
+	        (
+	            (#{searchDate} = 'cpnListStartDate' and cl.cpnListStartDate between TO_DATE(#{searchStartDate}, 'YYYY-MM-DD') and TO_DATE(#{searchEndDate}, 'YYYY-MM-DD') + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+	            or
+	            (#{searchDate} = 'cpnListEndDate' and cl.cpnListEndDate between TO_DATE(#{searchStartDate}, 'YYYY-MM-DD') and TO_DATE(#{searchEndDate}, 'YYYY-MM-DD') + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+	            or
+	            (#{searchDate} = 'cpnListUseDate' and cl.cpnListUseDate between TO_DATE(#{searchStartDate}, 'YYYY-MM-DD') and TO_DATE(#{searchEndDate}, 'YYYY-MM-DD') + INTERVAL '1' DAY - INTERVAL '1' SECOND)
+	            or 
+	            (#{searchStartDate} is null and #{searchEndDate} is null)
+	        )
+	        and (#{cpnListStatus} is null or cl.cpnListStatus = #{cpnListStatus})
+	        and (#{userId} is null or cl.userId like '%' || #{userId} || '%')
+	        and (#{cpnName} is null or c.cpnName = #{cpnName})
+	</select>
+  </mapper>

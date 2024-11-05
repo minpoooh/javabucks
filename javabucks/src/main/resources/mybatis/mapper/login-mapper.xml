@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="mybtis.mapper.login-mapper">
+
+	<select id="checkId" parameterType="String" resultType="int">
+		select count(*) from javabucks_user 
+		where userId = #{id}
+	</select>
+	
+	<select id="checkEmail" parameterType="java.util.Map" resultType="int">
+		select count(*) from javabucks_user 
+		where userEmail1 = #{email1}
+		and userEmail2 = #{email2}
+	</select>
+	
+	<insert id="insertUser" parameterType="java.util.Map">
+		INSERT INTO javabucks_user (
+		    userId, userPasswd, userName, userNickName, userGender, userBirth, 
+		    userEmail1, userEmail2, userTel1, userTel2, userTel3, gradeCode
+		) 
+		VALUES (
+		    #{userId}, #{passWd}, #{userName}, #{userNickName}, #{gender}, #{birth}, 
+		   #{email1}, #{email2}, #{tel1}, #{tel2}, #{tel3} , #{grade}
+		) 
+	</insert>
+	
+	<select id="findUserByEmail" parameterType="java.util.Map" resultType="UserDTO">
+		select userEmail1, userEmail2, userPasswd from javabucks_user 
+		where userEmail1 = #{userEmail1} 
+			and userEmail2 = #{userEmail2}
+	</select>
+	
+	<select id="findUserByIDEmail" parameterType="java.util.Map" resultType="UserDTO">
+		select userEmail1, userEmail2, userPasswd from javabucks_user 
+		where userEmail1 = #{userEmail1} 
+			and userEmail2 = #{userEmail2}
+			and userId = #{userId}
+	</select>
+	
+	<select id="findUserByLogin" parameterType="String" resultType="UserDTO">
+		select * from javabucks_user 
+		where userId = #{userId}
+			and userEnable = 'Y'
+	</select>
+
+	<select id="findIdbyEmail" parameterType="java.util.Map" resultType="String">
+		select userId from javabucks_user 
+		where userEmail1 = #{userEmail1} 
+			and userEmail2 = #{userEmail2}
+	</select>
+	
+	<select id="findPwbyEmail" parameterType="java.util.Map" resultType="String">
+		select userPasswd from javabucks_user 
+		where userEmail1 = #{userEmail1} 
+			and userEmail2 = #{userEmail2}
+			and userId = #{userId}
+	</select>
+	
+	<select id="getUserInfo" parameterType="String" resultType="UserDTO">
+		select * from javabucks_user
+		where userId = #{userId}
+	</select>
+	
+	<select id="getUserPassWd" parameterType="String" resultType="String">
+		select userPassWd from javabucks_user
+		where userId = #{userId}
+	</select>
+	
+	<update id="updateUserInfo" parameterType="java.util.Map">
+		update javabucks_user set
+			userNickname = #{userNickname},
+			userEmail1 = #{userEmail1},
+			userEmail2 = #{userEmail2},
+			<if test ="userPassWd != '' and userPassWd != null">
+				userPassWd = #{userPassWd},
+			</if>
+			userTel1 = #{userTel1},
+			userTel2 = #{userTel2},
+			userTel3 = #{userTel3}
+		where userId = #{userId}
+	</update>
+	
+	<update id="updateUserDel" parameterType="String">
+		update javabucks_user set
+			userEnable = 'N'
+		where userId = #{userId}
+	</update>
+	
+	<insert id="insertWelcomeCoupon" parameterType="java.util.Map">
+		insert into javabucks_couponList(cpnListNum, cpnCode, userId, cpnListStatus, cpnListStartDate, cpnListEndDate, cpnListUseDate) 
+		values (seq_cpnListNum.nextval,'G-1',#{userId},'발급완료',SYSDATE,to_char(add_months(sysdate,+12),'yyyy-mm-dd'),'')
+	</insert>
+	
+	<insert id="insertBdayCoupon" parameterType="java.util.Map">
+		insert into javabucks_couponList(cpnListNum, cpnCode, userId, cpnListStatus, cpnListStartDate, cpnListEndDate, cpnListUseDate) 
+		values (seq_cpnListNum.nextval,'B-1',#{userId},'발급완료',SYSDATE,to_char(add_months(sysdate,+12),'yyyy-mm-dd'),'')
+	</insert>
+	
+	<insert id="insertWelcomeAlarm" parameterType="java.util.Map">
+		insert into javabucks_alarm (alarmNum, userId, alarmCate, alarmCont) 
+		VALUES(seq_alarmnum.nextval, #{userId}, 'cpn', '웰컴 쿠폰이 발급되었습니다.')
+	</insert>
+	
+	<insert id="insertBdayCouponAlarm" parameterType="java.util.Map">
+		insert into javabucks_alarm (alarmNum, userId, alarmCate, alarmCont) 
+		VALUES(seq_alarmnum.nextval, #{userId}, 'cpn', '생일 쿠폰이 발급되었습니다.')
+	</insert>
+
+</mapper>
